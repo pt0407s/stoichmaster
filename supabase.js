@@ -212,6 +212,10 @@ class SupabaseManager {
             .single();
         
         if (error) {
+            // If profile doesn't exist, return null (not an error)
+            if (error.code === 'PGRST116') {
+                return null;
+            }
             console.error('Error fetching profile:', error);
             return null;
         }
@@ -308,6 +312,21 @@ class SupabaseManager {
             // Update local if remote is higher
             if ((remoteProfile.xp || 0) > localXP) {
                 localStorage.setItem('stoichmaster_xp', remoteProfile.xp.toString());
+            }
+        } else {
+            // Profile doesn't exist, create it
+            const username = this.currentUser.user_metadata?.username || this.currentUser.user_metadata?.display_name || 'User';
+            await this.createUserProfile(this.currentUser.id, username, this.currentUser.email);
+            
+            // Upload local data if exists
+            if (localXP > 0) {
+                const rankManager = new RankManager();
+                const currentRank = rankManager.getCurrentRank(localXP);
+                await this.updateUserXP(this.currentUser.id, localXP, currentRank.rank.name);
+                
+                if (localStats.questionsAnswered) {
+                    await this.updateUserStats(this.currentUser.id, localStats);
+                }
             }
         }
     }
