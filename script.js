@@ -14,6 +14,7 @@ class StoichMasterApp {
         this.statsManager = new StatsManager();
         this.supabaseManager = new SupabaseManager();
         this.tutorialManager = new TutorialManager();
+        this.stepByStepManager = new StepByStepManager(this);
         
         // Load saved XP
         const savedXP = localStorage.getItem('stoichmaster_xp');
@@ -89,15 +90,15 @@ class StoichMasterApp {
             });
         });
         
-        // Tutorial buttons
-        document.getElementById('stoichTutorial')?.addEventListener('click', () => {
-            this.tutorialManager.startTutorial('stoichiometry');
+        // Step-by-step mode buttons
+        document.getElementById('stoichStepByStep')?.addEventListener('click', () => {
+            this.stepByStepManager.activate('stoichiometry');
         });
-        document.getElementById('conversionTutorial')?.addEventListener('click', () => {
-            this.tutorialManager.startTutorial('conversion');
+        document.getElementById('conversionStepByStep')?.addEventListener('click', () => {
+            this.stepByStepManager.activate('conversion');
         });
-        document.getElementById('balancingTutorial')?.addEventListener('click', () => {
-            this.tutorialManager.startTutorial('balancing');
+        document.getElementById('balancingStepByStep')?.addEventListener('click', () => {
+            this.stepByStepManager.activate('balancing');
         });
         
         // Stoichiometry
@@ -339,11 +340,16 @@ class StoichMasterApp {
             document.getElementById('stoichExplanation').innerHTML = explanation;
             document.getElementById('stoichExplanation').classList.remove('hidden');
             
-            this.statsManager.recordAnswer(true, 'stoichiometry', this.currentDifficulty, timeTaken, xpEarned);
-            this.syncToSupabase();
+            // Only record stats if not in step-by-step mode
+            if (!this.stepByStepManager.isActive()) {
+                this.statsManager.recordAnswer(true, 'stoichiometry', this.currentDifficulty, timeTaken, xpEarned);
+                this.syncToSupabase();
+            }
         } else {
             this.handleIncorrectAnswer('stoich');
-            this.statsManager.recordAnswer(false, 'stoichiometry', this.currentDifficulty, timeTaken, 0);
+            if (!this.stepByStepManager.isActive()) {
+                this.statsManager.recordAnswer(false, 'stoichiometry', this.currentDifficulty, timeTaken, 0);
+            }
         }
     }
     
@@ -460,11 +466,15 @@ class StoichMasterApp {
             document.getElementById('conversionExplanation').innerHTML = explanation;
             document.getElementById('conversionExplanation').classList.remove('hidden');
             
-            this.statsManager.recordAnswer(true, 'conversion', this.currentDifficulty, timeTaken, xpEarned);
-            this.syncToSupabase();
+            if (!this.stepByStepManager.isActive()) {
+                this.statsManager.recordAnswer(true, 'conversion', this.currentDifficulty, timeTaken, xpEarned);
+                this.syncToSupabase();
+            }
         } else {
             this.handleIncorrectAnswer('conversion');
-            this.statsManager.recordAnswer(false, 'conversion', this.currentDifficulty, timeTaken, 0);
+            if (!this.stepByStepManager.isActive()) {
+                this.statsManager.recordAnswer(false, 'conversion', this.currentDifficulty, timeTaken, 0);
+            }
         }
     }
     
@@ -536,11 +546,15 @@ class StoichMasterApp {
             document.getElementById('balancingExplanation').innerHTML = explanation;
             document.getElementById('balancingExplanation').classList.remove('hidden');
             
-            this.statsManager.recordAnswer(true, 'balancing', this.currentDifficulty, timeTaken, xpEarned);
-            this.syncToSupabase();
+            if (!this.stepByStepManager.isActive()) {
+                this.statsManager.recordAnswer(true, 'balancing', this.currentDifficulty, timeTaken, xpEarned);
+                this.syncToSupabase();
+            }
         } else {
             this.handleIncorrectAnswer('balancing');
-            this.statsManager.recordAnswer(false, 'balancing', this.currentDifficulty, timeTaken, 0);
+            if (!this.stepByStepManager.isActive()) {
+                this.statsManager.recordAnswer(false, 'balancing', this.currentDifficulty, timeTaken, 0);
+            }
         }
     }
     
@@ -562,6 +576,17 @@ class StoichMasterApp {
     
     // Helper Methods
     handleCorrectAnswer(type, xpEarned, timeTaken) {
+        // Check if step-by-step mode is active - if so, don't award XP
+        if (this.stepByStepManager.isActive()) {
+            this.showFeedback(type, `Correct! (No XP in step-by-step mode)`, true);
+            const input = document.getElementById(`${type}Answer`);
+            if (input) {
+                input.classList.add('correct-answer');
+                setTimeout(() => input.classList.remove('correct-answer'), 600);
+            }
+            return;
+        }
+        
         this.totalXP += xpEarned;
         this.streak += 1;
         localStorage.setItem('stoichmaster_xp', this.totalXP);
