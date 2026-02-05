@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoichMaster - Master Chemistry Through Practice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .correct-answer { animation: correctFlash 0.6s ease; }
+        .incorrect-answer { animation: incorrectShake 0.6s ease; }
+        @keyframes correctFlash {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: #10b981; }
+        }
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .molecular-formula { font-family: 'Courier New', monospace; }
+        .xp-bar { transition: width 0.5s ease; }
+        .rank-badge { animation: rankPulse 2s infinite; }
+        @keyframes rankPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <header class="bg-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-atom text-3xl text-indigo-600"></i>
+                    <h1 class="text-3xl font-bold text-gray-800">StoichMaster</h1>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div id="authContainer">
+                        <button id="signInBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                        </button>
+                    </div>
+                    <div class="text-center cursor-pointer" id="rankDisplay">
+                        <div class="text-2xl font-bold rank-badge" id="rankName">Helium</div>
+                        <div class="text-sm text-gray-600">Rank</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-indigo-600" id="totalXP">0</div>
+                        <div class="text-sm text-gray-600">XP</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="streak">0</div>
+                        <div class="text-sm text-gray-600">Streak</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- XP Progress Bar -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700" id="currentRankText">Helium</span>
+                <span class="text-sm font-medium text-gray-700" id="nextRankText">Next: Neon</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4">
+                <div class="xp-bar bg-gradient-to-r from-indigo-500 to-purple-600 h-4 rounded-full" id="xpBar" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-gray-600" id="xpProgress">0 / 100 XP</span>
+                <span class="text-xs text-gray-600" id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <!-- Difficulty Selector -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                <i class="fas fa-sliders-h mr-2"></i>Select Difficulty
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button class="difficulty-btn bg-green-500 text-white px-6 py-4 rounded-lg hover:bg-green-600 transition-colors ring-4 ring-white" data-difficulty="easy">
+                    <i class="fas fa-smile text-2xl mb-2"></i>
+                    <div class="font-bold">Easy</div>
+                    <div class="text-xs">1x XP</div>
+                </button>
+                <button class="difficulty-btn bg-yellow-500 text-white px-6 py-4 rounded-lg hover:bg-yellow-600 transition-colors" data-difficulty="medium">
+                    <i class="fas fa-meh text-2xl mb-2"></i>
+                    <div class="font-bold">Medium</div>
+                    <div class="text-xs">1.5x XP</div>
+                </button>
+                <button class="difficulty-btn bg-orange-500 text-white px-6 py-4 rounded-lg hover:bg-orange-600 transition-colors" data-difficulty="hard">
+                    <i class="fas fa-frown text-2xl mb-2"></i>
+                    <div class="font-bold">Hard</div>
+                    <div class="text-xs">2x XP</div>
+                </button>
+                <button class="difficulty-btn bg-red-500 text-white px-6 py-4 rounded-lg hover:bg-red-600 transition-colors" data-difficulty="extreme">
+                    <i class="fas fa-skull text-2xl mb-2"></i>
+                    <div class="font-bold">Extreme</div>
+                    <div class="text-xs">3x XP</div>
+                </button>
+            </div>
+            <div class="mt-4 text-center">
+                <span class="text-sm text-gray-600">Current: </span>
+                <span class="text-sm font-bold text-indigo-600" id="currentDifficulty">Easy</span>
+            </div>
+        </div>
+
+        <nav class="bg-white rounded-lg shadow-md p-2 mb-8">
+            <div class="flex flex-wrap justify-center space-x-2">
+                <button class="tab-btn px-6 py-3 rounded-lg font-medium transition-all duration-200 bg-indigo-600 text-white" data-tab="stoichiometry">
+                    <i class="fas fa-balance-scale mr-2"></i>Stoichiometry
+                </button>
+                <button class="tab-btn px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-100" data-tab="conversion">
+                    <i class="fas fa-exchange-alt mr-2"></i>Unit Conversion
+                </button>
+                <button class="tab-btn px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-100" data-tab="balancing">
+                    <i class="fas fa-equals mr-2"></i>Equation Balancing
+                </button>
+                <button class="tab-btn px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-100" data-tab="stats">
+                    <i class="fas fa-chart-bar mr-2"></i>Stats
+                </button>
+                <button class="tab-btn px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-100" data-tab="ranks">
+                    <i class="fas fa-trophy mr-2"></i>Ranks
+                </button>
+                <button class="tab-btn px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-100" data-tab="leaderboard">
+                    <i class="fas fa-crown mr-2"></i>Leaderboard
+                </button>
+            </div>
+        </nav>
+
+        <!-- Stoichiometry Section -->
+        <div id="stoichiometry" class="tab-content active">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-balance-scale text-indigo-600 mr-3"></i>Stoichiometry Practice
+                    </h2>
+                    <button id="stoichTutorial" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                        <i class="fas fa-graduation-cap mr-2"></i>Tutorial
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                        <p class="text-sm text-blue-700">
+                            <strong>Instructions:</strong> Solve the stoichiometry problem. Enter your answer with appropriate units.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="stoichiometryProblem" class="mb-8">
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-sm font-medium text-gray-600">
+                                <i class="fas fa-clock mr-1"></i>
+                                <span id="stoichTimer">0.0s</span>
+                            </div>
+                            <div class="text-sm font-medium text-indigo-600">
+                                <i class="fas fa-star mr-1"></i>
+                                <span id="stoichPotentialXP">10 XP</span>
+                            </div>
+                        </div>
+                        <div id="stoichProblemText" class="text-lg molecular-formula mb-4"></div>
+                        <div id="stoichGivenInfo" class="text-sm text-gray-600 mb-4"></div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 mb-6">
+                        <input type="number" id="stoichAnswer" step="0.001" placeholder="Enter your answer" 
+                               class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                        <select id="stoichUnit" class="px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                            <option value="g">grams (g)</option>
+                            <option value="mol">moles (mol)</option>
+                            <option value="L">liters (L)</option>
+                            <option value="mL">milliliters (mL)</option>
+                            <option value="atoms">atoms</option>
+                            <option value="molecules">molecules</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button id="stoichCheck" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>Check Answer
+                        </button>
+                        <button id="stoichNew" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-redo mr-2"></i>New Problem
+                        </button>
+                        <button id="stoichHint" class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors">
+                            <i class="fas fa-lightbulb mr-2"></i>Hint
+                        </button>
+                    </div>
+                </div>
+
+                <div id="stoichFeedback" class="hidden mb-6"></div>
+                <div id="stoichExplanation" class="hidden bg-green-50 border-l-4 border-green-400 p-4 rounded"></div>
+            </div>
+        </div>
+
+        <!-- Unit Conversion Section -->
+        <div id="conversion" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-exchange-alt text-indigo-600 mr-3"></i>Unit Conversion Practice
+                    </h2>
+                    <button id="conversionTutorial" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                        <i class="fas fa-graduation-cap mr-2"></i>Tutorial
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                        <p class="text-sm text-blue-700">
+                            <strong>Instructions:</strong> Convert the given value to the requested units. Enter your numerical answer.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="conversionProblem" class="mb-8">
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-sm font-medium text-gray-600">
+                                <i class="fas fa-clock mr-1"></i>
+                                <span id="conversionTimer">0.0s</span>
+                            </div>
+                            <div class="text-sm font-medium text-indigo-600">
+                                <i class="fas fa-star mr-1"></i>
+                                <span id="conversionPotentialXP">10 XP</span>
+                            </div>
+                        </div>
+                        <div id="conversionProblemText" class="text-lg molecular-formula mb-4"></div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 mb-6">
+                        <input type="number" id="conversionAnswer" step="0.001" placeholder="Enter your answer" 
+                               class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                        <span id="conversionTargetUnit" class="text-lg font-medium text-gray-700"></span>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button id="conversionCheck" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>Check Answer
+                        </button>
+                        <button id="conversionNew" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-redo mr-2"></i>New Problem
+                        </button>
+                        <button id="conversionHint" class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors">
+                            <i class="fas fa-lightbulb mr-2"></i>Hint
+                        </button>
+                    </div>
+                </div>
+
+                <div id="conversionFeedback" class="hidden mb-6"></div>
+                <div id="conversionExplanation" class="hidden bg-green-50 border-l-4 border-green-400 p-4 rounded"></div>
+            </div>
+        </div>
+
+        <!-- Equation Balancing Section -->
+        <div id="balancing" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-equals text-indigo-600 mr-3"></i>Equation Balancing Practice
+                    </h2>
+                    <button id="balancingTutorial" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                        <i class="fas fa-graduation-cap mr-2"></i>Tutorial
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                        <p class="text-sm text-blue-700">
+                            <strong>Instructions:</strong> Enter coefficients to balance the chemical equation. Leave coefficient as 1 if not needed.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="balancingProblem" class="mb-8">
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="text-sm font-medium text-gray-600">
+                                <i class="fas fa-clock mr-1"></i>
+                                <span id="balancingTimer">0.0s</span>
+                            </div>
+                            <div class="text-sm font-medium text-indigo-600">
+                                <i class="fas fa-star mr-1"></i>
+                                <span id="balancingPotentialXP">10 XP</span>
+                            </div>
+                        </div>
+                        <div id="balancingEquation" class="text-xl molecular-formula text-center mb-6"></div>
+                        <div id="balancingInputs" class="flex flex-wrap justify-center items-center gap-2"></div>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <button id="balancingCheck" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>Check Answer
+                        </button>
+                        <button id="balancingNew" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-redo mr-2"></i>New Problem
+                        </button>
+                        <button id="balancingHint" class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors">
+                            <i class="fas fa-lightbulb mr-2"></i>Hint
+                        </button>
+                    </div>
+                </div>
+
+                <div id="balancingFeedback" class="hidden mb-6"></div>
+                <div id="balancingExplanation" class="hidden bg-green-50 border-l-4 border-green-400 p-4 rounded"></div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div id="stats" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-chart-bar text-indigo-600 mr-3"></i>Your Statistics
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6">
+                        <div class="text-3xl font-bold text-blue-600" id="statTotalQuestions">0</div>
+                        <div class="text-sm text-gray-600">Total Questions</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6">
+                        <div class="text-3xl font-bold text-green-600" id="statAccuracy">0%</div>
+                        <div class="text-sm text-gray-600">Accuracy</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6">
+                        <div class="text-3xl font-bold text-purple-600" id="statBestStreak">0</div>
+                        <div class="text-sm text-gray-600">Best Streak</div>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Performance by Difficulty</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <div class="font-bold text-green-700">Easy</div>
+                            <div class="text-2xl font-bold text-green-600" id="statEasyCorrect">0</div>
+                            <div class="text-xs text-gray-600" id="statEasyTotal">/ 0 answered</div>
+                        </div>
+                        <div class="bg-yellow-50 rounded-lg p-4">
+                            <div class="font-bold text-yellow-700">Medium</div>
+                            <div class="text-2xl font-bold text-yellow-600" id="statMediumCorrect">0</div>
+                            <div class="text-xs text-gray-600" id="statMediumTotal">/ 0 answered</div>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4">
+                            <div class="font-bold text-orange-700">Hard</div>
+                            <div class="text-2xl font-bold text-orange-600" id="statHardCorrect">0</div>
+                            <div class="text-xs text-gray-600" id="statHardTotal">/ 0 answered</div>
+                        </div>
+                        <div class="bg-red-50 rounded-lg p-4">
+                            <div class="font-bold text-red-700">Extreme</div>
+                            <div class="text-2xl font-bold text-red-600" id="statExtremeCorrect">0</div>
+                            <div class="text-xs text-gray-600" id="statExtremeTotal">/ 0 answered</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Questions Answered</h3>
+                    <div class="flex space-x-4 mb-4">
+                        <button class="stats-period-btn bg-indigo-600 text-white px-4 py-2 rounded-lg" data-period="daily">Daily</button>
+                        <button class="stats-period-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg" data-period="weekly">Weekly</button>
+                        <button class="stats-period-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg" data-period="monthly">Monthly</button>
+                    </div>
+                    <canvas id="statsChart" class="w-full" height="100"></canvas>
+                </div>
+
+                <div class="text-center">
+                    <button id="resetStats" class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors">
+                        <i class="fas fa-trash mr-2"></i>Reset All Stats
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ranks Section -->
+        <div id="ranks" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-trophy text-indigo-600 mr-3"></i>Rank System
+                </h2>
+                
+                <div id="ranksList" class="space-y-6"></div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div id="leaderboard" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-crown text-indigo-600 mr-3"></i>Global Leaderboard
+                </h2>
+                
+                <div id="leaderboardNotice" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-6">
+                    <p class="text-sm text-yellow-700">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Sign in to see the global leaderboard and compete with other players!</strong>
+                    </p>
+                </div>
+                
+                <div id="leaderboardContent" class="hidden">
+                    <div class="mb-6">
+                        <button id="refreshLeaderboard" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Rank</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Player</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">XP</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Questions</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Accuracy</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboardTable">
+                                <tr>
+                                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                        <div>Loading leaderboard...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2024 StoichMaster. Master chemistry through practice!</p>
+        </div>
+    </footer>
+
+    <!-- Load Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Load Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Load App Scripts -->
+    <script src="config.js"></script>
+    <script src="ranks.js"></script>
+    <script src="stats.js"></script>
+    <script src="supabase.js"></script>
+    <script src="tutorial.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
