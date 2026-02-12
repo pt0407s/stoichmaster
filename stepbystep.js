@@ -437,33 +437,11 @@ class StepByStepManager {
         this.currentStep++;
         
         if (this.currentStep >= this.steps.length) {
-            this.completeTutorial();
+            // All steps completed - exit step-by-step mode and return to normal
+            this.deactivate();
         } else {
             this.updateStepDisplay();
         }
-    }
-    
-    completeTutorial() {
-        const container = document.getElementById(`${this.problemType}StepByStep`);
-        if (!container) return;
-        
-        container.innerHTML = `
-            <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-lg mb-6">
-                <h3 class="text-lg font-bold text-green-800 mb-3">
-                    <i class="fas fa-trophy mr-2"></i>Tutorial Complete!
-                </h3>
-                <p class="text-green-700 mb-4">
-                    Great job! You've completed all the steps. Now try solving problems on your own to earn XP!
-                </p>
-                <button id="${this.problemType}ExitComplete" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
-                    <i class="fas fa-check mr-2"></i>Got It!
-                </button>
-            </div>
-        `;
-        
-        document.getElementById(`${this.problemType}ExitComplete`)?.addEventListener('click', () => {
-            this.deactivate();
-        });
     }
     
     isActive() {
