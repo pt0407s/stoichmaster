@@ -10,7 +10,7 @@ class StoichMasterApp {
         this.timerInterval = null;
         
         // Initialize managers
-        this.rankManager = new RankManager();
+        this.rankManager = new PeriodicRankManager();
         this.statsManager = new StatsManager();
         this.supabaseManager = new SupabaseManager();
         this.tutorialManager = new TutorialManager();
@@ -176,6 +176,7 @@ class StoichMasterApp {
         } else if (tabName === 'ranks') {
             this.displayRanksList();
         } else if (tabName === 'leaderboard') {
+            this.setupLeaderboardFilters();
             this.loadLeaderboard();
         } else if (tabName === 'conversion' && !this.currentProblem?.type) {
             this.generateConversionProblem();
@@ -766,77 +767,35 @@ class StoichMasterApp {
     }
     
     updateRankDisplay() {
-        const currentRank = this.rankManager.getCurrentRank(this.totalXP);
-        const nextRank = this.rankManager.getNextRank(this.totalXP);
-        const progress = this.rankManager.getProgressToNextRank(this.totalXP);
+        const currentElement = this.rankManager.getCurrentElement(this.totalXP);
+        const progressInfo = this.rankManager.getProgressToNext(this.totalXP);
         
-        document.getElementById('rankName').textContent = currentRank.rank.name;
-        document.getElementById('rankName').className = `text-2xl font-bold rank-badge ${currentRank.tier.textColor}`;
+        document.getElementById('rankName').textContent = currentElement.symbol;
+        document.getElementById('rankName').title = `${currentElement.name} (Element ${currentElement.number})`;
         document.getElementById('totalXP').textContent = this.totalXP;
-        document.getElementById('streak').textContent = this.streak;
         
-        document.getElementById('currentRankText').textContent = `${currentRank.rank.name} (${currentRank.rank.symbol})`;
+        document.getElementById('currentRankText').textContent = `${currentElement.symbol} - ${currentElement.name}`;
+        document.getElementById('nextRankText').textContent = progressInfo.next ? `Next: ${progressInfo.next.symbol} - ${progressInfo.next.name}` : 'Max Element!';
         
-        if (nextRank) {
-            document.getElementById('nextRankText').textContent = `Next: ${nextRank.rank.name} (${nextRank.rank.symbol})`;
-            document.getElementById('xpProgress').textContent = `${this.totalXP} / ${nextRank.rank.xpRequired} XP`;
-            document.getElementById('progressPercent').textContent = `${progress.toFixed(1)}%`;
-            document.getElementById('xpBar').style.width = `${progress}%`;
-        } else {
-            document.getElementById('nextRankText').textContent = 'MAX RANK!';
-            document.getElementById('xpProgress').textContent = `${this.totalXP} XP`;
-            document.getElementById('progressPercent').textContent = '100%';
-            document.getElementById('xpBar').style.width = '100%';
-        }
+        document.getElementById('xpProgress').textContent = progressInfo.next ? 
+            `${this.totalXP} / ${progressInfo.next.xpRequired} XP` : 
+            `${this.totalXP} XP (Max Element!)`;
+        document.getElementById('progressPercent').textContent = `${progressInfo.progress.toFixed(1)}%`;
+        document.getElementById('xpBar').style.width = `${progressInfo.progress}%`;
     }
     
     displayRanksList() {
         const container = document.getElementById('ranksList');
-        const allTiers = this.rankManager.getAllRanks();
-        const currentRank = this.rankManager.getCurrentRank(this.totalXP);
+        if (!container) return;
         
-        let html = '';
+        // Initialize periodic table UI
+        periodicTableUI = new PeriodicTableUI(this.rankManager, this.totalXP);
+        container.innerHTML = periodicTableUI.generatePeriodicTable();
         
-        allTiers.forEach((tier, tierIndex) => {
-            html += `
-                <div class="mb-6">
-                    <h3 class="text-xl font-bold mb-4 bg-gradient-to-r ${tier.color} text-white p-3 rounded-lg">
-                        Tier ${tierIndex + 1}: ${tier.name}
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            `;
-            
-            tier.ranks.forEach((rank, rankIndex) => {
-                const isUnlocked = this.totalXP >= rank.xpRequired;
-                const isCurrent = currentRank.rank.name === rank.name;
-                const bgClass = isUnlocked ? 'bg-gradient-to-br from-green-50 to-green-100' : 'bg-gray-100';
-                const textClass = isUnlocked ? 'text-green-700' : 'text-gray-400';
-                const borderClass = isCurrent ? 'border-4 border-indigo-500' : 'border border-gray-300';
-                
-                html += `
-                    <div class="${bgClass} ${borderClass} rounded-lg p-4 relative">
-                        ${isCurrent ? '<div class="absolute top-2 right-2 bg-indigo-500 text-white text-xs px-2 py-1 rounded">CURRENT</div>' : ''}
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-2xl font-bold ${textClass}">${rank.symbol}</div>
-                                <div class="text-lg font-semibold ${textClass}">${rank.name}</div>
-                                <div class="text-sm text-gray-600">${rank.xpRequired} XP Required</div>
-                            </div>
-                            <div class="text-3xl">
-                                ${isUnlocked ? '🔓' : '🔒'}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += `
-                    </div>
-                </div>
-            `;
+        // Add modal close handler
+        document.getElementById('closeModal')?.addEventListener('click', () => {
+            periodicTableUI.closeModal();
         });
-        
-        container.innerHTML = html;
     }
     
     updateStatsDisplay() {
@@ -923,6 +882,44 @@ class StoichMasterApp {
         });
     }
     
+    setupLeaderboardFilters() {
+        // Set up category filter buttons
+        document.querySelectorAll('.leaderboard-category-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const category = e.target.closest('.leaderboard-category-btn').dataset.category;
+                this.currentLeaderboardCategory = category;
+                
+                // Update button styles
+                document.querySelectorAll('.leaderboard-category-btn').forEach(b => {
+                    b.className = 'leaderboard-category-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg';
+                });
+                e.target.closest('.leaderboard-category-btn').className = 'leaderboard-category-btn bg-indigo-600 text-white px-4 py-2 rounded-lg';
+                
+                this.loadLeaderboard();
+            });
+        });
+        
+        // Set up period filter buttons
+        document.querySelectorAll('.leaderboard-period-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const period = e.target.closest('.leaderboard-period-btn').dataset.period;
+                this.currentLeaderboardPeriod = period;
+                
+                // Update button styles
+                document.querySelectorAll('.leaderboard-period-btn').forEach(b => {
+                    b.className = 'leaderboard-period-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg';
+                });
+                e.target.closest('.leaderboard-period-btn').className = 'leaderboard-period-btn bg-purple-600 text-white px-4 py-2 rounded-lg';
+                
+                this.loadLeaderboard();
+            });
+        });
+        
+        // Initialize defaults
+        this.currentLeaderboardCategory = this.currentLeaderboardCategory || 'xp';
+        this.currentLeaderboardPeriod = this.currentLeaderboardPeriod || 'alltime';
+    }
+    
     async loadLeaderboard() {
         if (!this.supabaseManager.isAuthenticated()) {
             document.getElementById('leaderboardNotice').classList.remove('hidden');
@@ -933,7 +930,9 @@ class StoichMasterApp {
         document.getElementById('leaderboardNotice').classList.add('hidden');
         document.getElementById('leaderboardContent').classList.remove('hidden');
         
-        const leaderboard = await this.supabaseManager.getGlobalLeaderboard(100);
+        const category = this.currentLeaderboardCategory || 'xp';
+        const period = this.currentLeaderboardPeriod || 'alltime';
+        const leaderboard = await this.supabaseManager.getLeaderboard(category, period, 100);
         const tableBody = document.getElementById('leaderboardTable');
         
         if (leaderboard.length === 0) {

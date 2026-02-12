@@ -254,20 +254,69 @@ class SupabaseManager {
         }
     }
     
-    // Leaderboard Methods
-    async getGlobalLeaderboard(limit = 100) {
-        const { data, error } = await this.supabase
-            .from('users')
-            .select('username, xp, rank, total_questions, correct_answers')
-            .order('xp', { ascending: false })
-            .limit(limit);
+    // Enhanced Leaderboard Methods
+    async getLeaderboard(category = 'xp', period = 'alltime', limit = 100) {
+        let query = this.supabase.from('users').select('username, xp, rank, total_questions, correct_answers, created_at');
+        
+        // Apply time filter for non-alltime periods
+        if (period !== 'alltime') {
+            const now = new Date();
+            let startDate;
+            
+            switch(period) {
+                case 'daily':
+                    startDate = new Date(now.setHours(0, 0, 0, 0));
+                    break;
+                case 'weekly':
+                    startDate = new Date(now.setDate(now.getDate() - 7));
+                    break;
+                case 'monthly':
+                    startDate = new Date(now.setMonth(now.getMonth() - 1));
+                    break;
+            }
+            
+            if (startDate) {
+                query = query.gte('updated_at', startDate.toISOString());
+            }
+        }
+        
+        // Apply category sorting
+        switch(category) {
+            case 'questions':
+                query = query.order('total_questions', { ascending: false });
+                break;
+            case 'accuracy':
+                // Filter users with at least 1000 questions for accuracy leaderboard
+                if (category === 'accuracy') {
+                    query = query.gte('total_questions', 1000);
+                }
+                query = query.order('correct_answers', { ascending: false });
+                break;
+            case 'xp':
+            default:
+                query = query.order('xp', { ascending: false });
+                break;
+        }
+        
+        query = query.limit(limit);
+        
+        const { data, error } = await query;
         
         if (error) {
             console.error('Error fetching leaderboard:', error);
             return [];
         }
         
-        return data;
+        // Calculate accuracy for each user
+        return data.map(user => ({
+            ...user,
+            accuracy: user.total_questions > 0 ? ((user.correct_answers / user.total_questions) * 100).toFixed(1) : 0
+        }));
+    }
+    
+    // Legacy method for backward compatibility
+    async getGlobalLeaderboard(limit = 100) {
+        return this.getLeaderboard('xp', 'alltime', limit);
     }
     
     async getUserRank(userId) {

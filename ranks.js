@@ -1,4 +1,8 @@
-// Rank System for StoichMaster
+// Periodic Table Rank System for AtomLevel
+// Players unlock elements sequentially by atomic number
+
+// Import elements data (will be loaded via script tag in HTML)
+// const ELEMENTS is defined in elements.js
 
 const RANK_SYSTEM = {
     tiers: [

@@ -29,6 +29,51 @@
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
+        
+        /* Periodic Table Styles */
+        .periodic-table-grid {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            grid-template-rows: repeat(7, 1fr);
+            gap: 4px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .periodic-cell {
+            aspect-ratio: 1;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .periodic-cell.empty {
+            background: transparent;
+            border: none;
+        }
+        .periodic-cell-small {
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-width: 60px;
+            transition: all 0.2s;
+        }
+        .lanthanides-actinides {
+            margin-top: 20px;
+        }
+        .lanthanides-row, .actinides-row {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -413,6 +458,35 @@
                 </div>
                 
                 <div id="leaderboardContent" class="hidden">
+                    <!-- Category Tabs -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <button class="leaderboard-category-btn bg-indigo-600 text-white px-4 py-2 rounded-lg" data-category="xp">
+                            <i class="fas fa-star mr-2"></i>Most XP
+                        </button>
+                        <button class="leaderboard-category-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg" data-category="questions">
+                            <i class="fas fa-question-circle mr-2"></i>Most Questions
+                        </button>
+                        <button class="leaderboard-category-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg" data-category="accuracy">
+                            <i class="fas fa-bullseye mr-2"></i>Highest Accuracy
+                        </button>
+                    </div>
+                    
+                    <!-- Time Period Tabs -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <button class="leaderboard-period-btn bg-purple-600 text-white px-4 py-2 rounded-lg" data-period="alltime">
+                            All Time
+                        </button>
+                        <button class="leaderboard-period-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg" data-period="monthly">
+                            Monthly
+                        </button>
+                        <button class="leaderboard-period-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg" data-period="weekly">
+                            Weekly
+                        </button>
+                        <button class="leaderboard-period-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg" data-period="daily">
+                            Daily
+                        </button>
+                    </div>
+                    
                     <div class="mb-6">
                         <button id="refreshLeaderboard" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                             <i class="fas fa-sync-alt mr-2"></i>Refresh
@@ -453,6 +527,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Load App Scripts -->
     <script src="config.js"></script>
+    <script src="elements.js"></script>
+    <script src="periodic-ranks.js"></script>
+    <script src="periodic-table.js"></script>
     <script src="ranks.js"></script>
     <script src="stats.js"></script>
     <script src="supabase.js"></script>
