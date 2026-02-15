@@ -73,9 +73,9 @@ class PeriodicTableUI {
     
     // Generate individual element cell
     generateElementCell(element, isUnlocked, isCurrent, color) {
-        const opacity = isUnlocked ? '1' : '0.3';
+        const opacity = isUnlocked ? '1' : '0.4';
         const borderClass = isCurrent ? 'border-4 border-yellow-400 shadow-lg' : 'border border-gray-300';
-        const cursorClass = isUnlocked ? 'cursor-pointer hover:scale-110' : 'cursor-not-allowed';
+        const cursorClass = 'cursor-pointer';
         
         return `
             <div class="periodic-cell ${cursorClass} ${borderClass} transition-all duration-200"
@@ -124,9 +124,9 @@ class PeriodicTableUI {
     
     // Generate small element cell for lanthanides/actinides
     generateSmallElementCell(element, isUnlocked, isCurrent, color) {
-        const opacity = isUnlocked ? '1' : '0.3';
+        const opacity = isUnlocked ? '1' : '0.4';
         const borderClass = isCurrent ? 'border-2 border-yellow-400' : 'border border-gray-300';
-        const cursorClass = isUnlocked ? 'cursor-pointer hover:scale-110' : 'cursor-not-allowed';
+        const cursorClass = 'cursor-pointer';
         
         return `
             <div class="periodic-cell-small ${cursorClass} ${borderClass} transition-all duration-200"
@@ -173,68 +173,72 @@ class PeriodicTableUI {
     showElementDetails(elementNumber) {
         const element = this.rankManager.elements[elementNumber - 1];
         const isUnlocked = this.userXP >= element.xpRequired;
+        const color = this.rankManager.getCategoryColor(element.category);
         
+        // Always show full details for educational purposes
+        let lockNotice = '';
         if (!isUnlocked) {
-            // Show locked message
-            document.getElementById('elementDetails').innerHTML = `
-                <div class="text-center">
-                    <div class="text-6xl mb-4">🔒</div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">${element.symbol} - ${element.name}</h2>
-                    <p class="text-xl text-gray-600 mb-4">Element ${element.number}</p>
-                    <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded">
-                        <p class="text-red-700 font-medium">This element is locked!</p>
-                        <p class="text-red-600 mt-2">Earn <strong>${element.xpRequired - this.userXP} more XP</strong> to unlock.</p>
-                    </div>
+            lockNotice = `
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
+                    <p class="text-yellow-800 font-medium"><i class="fas fa-lock mr-2"></i>Rank Locked</p>
+                    <p class="text-yellow-700 mt-1">Earn <strong>${element.xpRequired - this.userXP} more XP</strong> to unlock this element as your rank!</p>
                 </div>
             `;
         } else {
-            // Show full details
-            const color = this.rankManager.getCategoryColor(element.category);
-            document.getElementById('elementDetails').innerHTML = `
-                <div class="text-center">
-                    <div class="inline-block p-6 rounded-xl mb-4" style="background-color: ${color};">
-                        <div class="text-sm font-bold text-gray-700">${element.number}</div>
-                        <div class="text-6xl font-bold text-gray-900">${element.symbol}</div>
-                    </div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">${element.name}</h2>
-                    <p class="text-lg text-gray-600 mb-6">${element.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                    
-                    <div class="grid grid-cols-2 gap-4 text-left mb-6">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="text-sm text-gray-600">Atomic Number</div>
-                            <div class="text-2xl font-bold text-gray-800">${element.number}</div>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="text-sm text-gray-600">Group</div>
-                            <div class="text-2xl font-bold text-gray-800">${element.group}</div>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="text-sm text-gray-600">Period</div>
-                            <div class="text-2xl font-bold text-gray-800">${element.period}</div>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="text-sm text-gray-600">XP Required</div>
-                            <div class="text-2xl font-bold text-green-600">${element.xpRequired}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded mb-4 text-left">
-                        <div class="font-bold text-blue-800 mb-2">Electron Configuration</div>
-                        <div class="text-blue-900 font-mono">${element.electronConfig}</div>
-                    </div>
-                    
-                    <div class="bg-purple-50 border-l-4 border-purple-400 p-4 rounded mb-4 text-left">
-                        <div class="font-bold text-purple-800 mb-2">Reactivity</div>
-                        <div class="text-purple-900">${element.reactivity}</div>
-                    </div>
-                    
-                    <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded text-left">
-                        <div class="font-bold text-green-800 mb-2">Fun Fact</div>
-                        <div class="text-green-900">${element.fact}</div>
-                    </div>
+            lockNotice = `
+                <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded mb-4">
+                    <p class="text-green-800 font-medium"><i class="fas fa-check-circle mr-2"></i>Rank Unlocked!</p>
+                    <p class="text-green-700 mt-1">You can use this element as your rank.</p>
                 </div>
             `;
         }
+        
+        document.getElementById('elementDetails').innerHTML = `
+            <div class="text-center">
+                <div class="inline-block p-6 rounded-xl mb-4" style="background-color: ${color};">
+                    <div class="text-sm font-bold text-gray-700">${element.number}</div>
+                    <div class="text-6xl font-bold text-gray-900">${element.symbol}</div>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">${element.name}</h2>
+                <p class="text-lg text-gray-600 mb-4">${element.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                
+                ${lockNotice}
+                
+                <div class="grid grid-cols-2 gap-4 text-left mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-sm text-gray-600">Atomic Number</div>
+                        <div class="text-2xl font-bold text-gray-800">${element.number}</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-sm text-gray-600">Group</div>
+                        <div class="text-2xl font-bold text-gray-800">${element.group}</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-sm text-gray-600">Period</div>
+                        <div class="text-2xl font-bold text-gray-800">${element.period}</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-sm text-gray-600">XP Required</div>
+                        <div class="text-2xl font-bold ${isUnlocked ? 'text-green-600' : 'text-orange-600'}">${element.xpRequired}</div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded mb-4 text-left">
+                    <div class="font-bold text-blue-800 mb-2">Electron Configuration</div>
+                    <div class="text-blue-900 font-mono">${element.electronConfig}</div>
+                </div>
+                
+                <div class="bg-purple-50 border-l-4 border-purple-400 p-4 rounded mb-4 text-left">
+                    <div class="font-bold text-purple-800 mb-2">Reactivity</div>
+                    <div class="text-purple-900">${element.reactivity}</div>
+                </div>
+                
+                <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded text-left">
+                    <div class="font-bold text-green-800 mb-2">Fun Fact</div>
+                    <div class="text-green-900">${element.fact}</div>
+                </div>
+            </div>
+        `;
         
         // Show modal
         document.getElementById('elementModal').classList.remove('hidden');

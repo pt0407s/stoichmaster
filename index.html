@@ -31,48 +31,84 @@
         }
         
         /* Periodic Table Styles */
+        .periodic-table-container {
+            max-width: 100%;
+            overflow-x: auto;
+            padding: 10px;
+        }
         .periodic-table-grid {
             display: grid;
-            grid-template-columns: repeat(18, 1fr);
-            grid-template-rows: repeat(7, 1fr);
-            gap: 4px;
-            max-width: 1400px;
+            grid-template-columns: repeat(18, minmax(40px, 1fr));
+            grid-template-rows: repeat(7, minmax(40px, 1fr));
+            gap: 2px;
+            max-width: 1200px;
             margin: 0 auto;
+            font-size: 0.75rem;
         }
         .periodic-cell {
             aspect-ratio: 1;
-            padding: 8px;
-            border-radius: 8px;
+            padding: 4px;
+            border-radius: 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .periodic-cell:not(.empty):hover {
+            transform: scale(1.15);
+            z-index: 10;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
         }
         .periodic-cell.empty {
             background: transparent;
             border: none;
+            pointer-events: none;
         }
         .periodic-cell-small {
-            padding: 4px;
+            padding: 3px;
             border-radius: 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            min-width: 60px;
-            transition: all 0.2s;
+            min-width: 45px;
+            height: 50px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .periodic-cell-small:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
         }
         .lanthanides-actinides {
-            margin-top: 20px;
+            margin-top: 15px;
         }
         .lanthanides-row, .actinides-row {
             display: flex;
-            gap: 4px;
+            gap: 2px;
             justify-content: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+        }
+        @media (max-width: 768px) {
+            .periodic-table-grid {
+                font-size: 0.6rem;
+                grid-template-columns: repeat(18, minmax(30px, 1fr));
+                grid-template-rows: repeat(7, minmax(30px, 1fr));
+            }
+            .periodic-cell {
+                padding: 2px;
+            }
+            .periodic-cell-small {
+                min-width: 35px;
+                height: 40px;
+            }
         }
     </style>
 </head>
